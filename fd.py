@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 class FiniteDifference:
-    """Finite difference method to solve a differntial equation in 1D
+    """Finite difference method to solve a differential equation in 1D
 
     Implementation of the finite difference method to solve the differential
     equation -u'' + c u' + d u = f on the square [a,b] with boundary
@@ -173,7 +173,7 @@ class FiniteDifference:
 
 
 class FiniteDifferenceSparse(FiniteDifference):
-
+    """Finite difference method with sparse matrices"""
     def get_coefficient_matrix(self):
         diags = [2*self.N**2+self.d_ev,
                  -self.N**2+0.5*self.N*self.c_ev[:-1],
