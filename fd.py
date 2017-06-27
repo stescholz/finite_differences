@@ -9,7 +9,56 @@ import matplotlib.pyplot as plt
 
 
 class FiniteDifference:
+    """Finite difference method to solve a differntial equation in 1D
 
+    Implementation of the finite difference method to solve the differential
+    equation -u'' + c u' + d u = f on the square [a,b] with boundary
+    condition u(a)=alpha and u(b)=beta numerically.
+
+    Parameters
+    ----------
+    a : float
+        Left boundary of the domain.
+    b : float
+        Right boundary of the domain.
+    c : function
+        The function in front of the first derivative.
+    d : function
+        The function in front of u.
+    f : function
+        The right hand side of the equation.
+    alpha : float
+        Left boundary value u(a).
+    beta : float
+        Right boundary value u(b).
+    N: int
+        Number of gridpoints minus 1, step size h=1/N.
+
+    Attributes
+    ----------
+    a : float
+        Left boundary of the domain.
+    b : float
+        Right boundary of the domain.
+    c : function
+        The function in front of the first derivative.
+    d : function
+        The function in front of u.
+    f : function
+        The right hand side of the equation.
+    alpha : float
+        Left boundary value u(a).
+    beta : float
+        Right boundary value u(b).
+    N: int
+        Number of gridpoints minus 1, step size h=1/N.
+    grid: array, shape=(N+1,)
+        Grid points.
+    c_ev: array, shape(N-1,)
+        Evaluation of the function c at the inner grid points.
+    d_ev: array, shape(N-1,)
+        Evaluation of the function d at the inner grid points.
+    """
     def __init__(self, a, b, c, d, f, alpha, beta, N):
         self.a = a
         self.b = b
@@ -23,19 +72,32 @@ class FiniteDifference:
         self.c_ev = self.c(self.grid[1:self.N])
         self.d_ev = self.d(self.grid[1:self.N])
 
-        # if not np.all(self.d_ev >= 0):
-        #    raise ValueError("d(x) >= 0")
-
         if not np.all(np.abs(self.c_ev)/N < 2):
-            raise ValueError("konvektionsdominantes Problem")
+            raise ValueError("convection dominated problem")
 
     def get_coefficient_matrix(self):
+        """Build the coefficient matrix of the problem
+
+        Returns
+        -------
+        array, shape(N-1, N-1)
+            The coefficient matrix.
+        """
+
         A = np.diagflat(2*self.N**2+self.d_ev)
         A += np.diagflat(-self.N**2+0.5*self.N*self.c_ev[:-1], 1)
         A += np.diagflat(-self.N**2-0.5*self.N*self.c_ev[1:], -1)
         return A
 
     def get_rhs(self):
+        """Build the right hand side of the problem
+
+        Returns
+        -------
+        array, shape(N-1, )
+            The right hand side.
+        """
+
         rhs = self.f(self.grid[1:self.N])
 
         # boundary values
@@ -45,14 +107,43 @@ class FiniteDifference:
         return rhs
 
     def solve(self, A, b):
+        """Solve the system of linear equations Ax=b
+
+        Parameters
+        ----------
+        A: array, shape(n, n)
+            The coefficient matrix
+        b: array, shape(n, )
+            The right hand side.
+
+        Returns
+        -------
+        array, shape(n,)
+            The solution x
+        """
         return np.linalg.solve(A, b)
 
     def calculate_solution(self):
+        """Solve the system of linear equations for the finite differnces
+
+        Returns
+        -------
+        array, shape(N-1,)
+            The solution u at the inner grid points
+        """
         A = self.get_coefficient_matrix()
         b = self.get_rhs()
         return self.solve(A, b)
 
     def calculate_full_solution(self):
+        """Get the full solution u
+
+        Returns
+        -------
+        array, shape(N+1,)
+            The solution u at all grid points
+        """
+
         u = np.zeros(self.N+1)
         u[1:self.N] = self.calculate_solution()
 
@@ -63,7 +154,13 @@ class FiniteDifference:
         return u
 
     def plot(self, analytical_solution=None):
+        """Create a plot of the approximative solution
 
+        Parameters
+        ----------
+        analytical_solution: function, optional
+            Add a second plot of the analytical solution of the problem.
+        """
         U = self.calculate_full_solution()
         plt.plot(self.grid, U, label="approx. solution")
 
